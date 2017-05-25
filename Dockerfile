@@ -1,8 +1,6 @@
 FROM openjdk:8
 MAINTAINER Steven Wade <steven@stevenwade.co.uk>
 
-ENV SVC_ROOT=/home/go
-
 ENV GOCD_VERSION 17.4.0-4892
 ENV GOCD_DISTR go-agent.deb
 
