@@ -1,36 +1,25 @@
-FROM openjdk:8
-MAINTAINER Steven Wade <steven@stevenwade.co.uk>
+FROM gocd/gocd-agent-centos-7:v17.6.0
+MAINTAINER Steve Wade <steven@stevenwade.co.uk>
 
-ENV GOCD_VERSION 17.4.0-4892
-ENV GOCD_DISTR go-agent.deb
+ARG git_repository="Unknown"
+ARG git_commit="Unknown"
+ARG git_branch="Unknown"
+ARG built_on="Unknown"
 
-ENV KUBECTL_VERSION 1.6.4
-ENV HELM_VERSION v2.4.2
+LABEL git.repository=$git_repository
+LABEL git.commit=$git_commit
+LABEL git.branch=$git_branch
+LABEL build.dockerfile=/Dockerfile
+LABEL build.on=$built_on
 
-# Install GoCD Agent
-RUN curl -fSL https://download.gocd.io/binaries/${GOCD_VERSION}/deb/go-agent_${GOCD_VERSION}_all.deb -o $GOCD_DISTR \
-    && dpkg -i $GOCD_DISTR \
-    && rm $GOCD_DISTR
+COPY ./Dockerfile /Dockerfile
 
-RUN mkdir /home/go && usermod -d /home/go go
-VOLUME /var/lib/go-agent
+RUN yum install wget -y && \
+    yum groupinstall 'Development Tools' -y
 
-# Include necessary agent configuration.
-ADD autoregister.properties /var/lib/go-agent/config/
-
-# Install Kubectl.
-RUN cd /usr/local/bin && \
-    wget --quiet https://storage.googleapis.com/kubernetes-release/release/v${KUBECTL_VERSION}/bin/linux/amd64/kubectl && \
-    chmod +x kubectl
-
-# Install Helm.
-RUN wget -O - https://kubernetes-helm.storage.googleapis.com/helm-${HELM_VERSION}-linux-amd64.tar.gz | tar -zx \
-    && mv linux-amd64/helm /bin/helm \
-    && rm -rf linux-amd64
-
-# Adding the entrypoint script to run GoCD
-COPY docker-entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
-ENTRYPOINT ["/entrypoint.sh"]
-
-CMD ["go-agent"]
+# Add docker to the agent
+ENV DOCKER_VERSION=17.03.1
+RUN curl --silent -O https://get.docker.com/builds/Linux/x86_64/docker-$DOCKER_VERSION-ce.tgz && \
+    tar xzf docker-*.tgz && \
+    mv docker/docker /usr/local/bin/docker && \
+    rm -rf docker
